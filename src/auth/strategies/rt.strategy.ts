@@ -23,7 +23,8 @@ export class RefreshTokenStrategy extends PassportStrategy(
       ?.replace('Bearer', '')
       .trim();
     if (!refreshToken) throw new ForbiddenException('Refresh token malformed');
-
+    // console.log(payload, refreshToken);
+    // return payload;
     return {
       ...payload,
       refreshToken,

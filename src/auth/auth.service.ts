@@ -29,7 +29,8 @@ export class AuthService {
       },
     });
     const tokens = await this.genrateTokens(newUser.id, newUser.email);
-    await this.updateRtHash(newUser.id, tokens.refresh_token);
+    const rtHash = await this.hashData(tokens.refresh_token);
+    await this.updateRtHash(newUser.id, rtHash);
     return tokens;
   }
 
@@ -59,11 +60,30 @@ export class AuthService {
     return { status: true };
   }
 
-  refresh() {
-    return '';
+  async refresh(user: JwtPayload) {
+    const userExists = await this.prismaService.user.findFirst({
+      where: {
+        id: user.id,
+        rtHashed: {
+          not: null,
+        },
+      },
+    });
+    if (!userExists) throw new BadRequestException('Access Denied!');
+    const rtMatches = await bcrypt.compare(
+      user.refreshToken,
+      userExists.rtHashed,
+      // 'ada',
+    );
+    if (!rtMatches) throw new BadRequestException('Access Denied!');
+    const tokens = await this.genrateTokens(userExists.id, userExists.email);
+    const rtHash = await this.hashData(tokens.refresh_token);
+    await this.updateRtHash(userExists.id, rtHash);
+
+    return tokens;
   }
 
-  private hashData(data: string) {
+  private async hashData(data: string) {
     return bcrypt.hash(data, 10);
   }
 
