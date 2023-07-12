@@ -5,11 +5,13 @@ import * as bcrypt from 'bcryptjs';
 import { Tokens } from './types';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './types/jwtPayload.type';
+import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async register(user: RegisterDto) {
@@ -95,12 +97,12 @@ export class AuthService {
 
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(JwtPayload, {
-        secret: 'at-secret',
-        expiresIn: '1h',
+        secret: this.configService.get('access_token_secret'),
+        expiresIn: this.configService.get('access_token_expiresin'),
       }),
       this.jwtService.signAsync(JwtPayload, {
-        secret: 'rt-secret',
-        expiresIn: '7d',
+        secret: this.configService.get('refresh_token_secret'),
+        expiresIn: this.configService.get('access_token_expiresin'),
       }),
     ]);
 

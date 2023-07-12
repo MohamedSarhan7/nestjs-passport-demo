@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto } from './dto';
-import { AuthGuard } from '@nestjs/passport';
 import { Public, User } from 'src/common/decorators';
 import { JwtPayload } from './types';
 import { RtGuard } from 'src/common/guards';
