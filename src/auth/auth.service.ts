@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { RegisterDto } from './dto';
+import { LoginDto, RegisterDto } from './dto';
 import * as bcrypt from 'bcryptjs';
 import { Tokens } from './types';
 import { JwtService } from '@nestjs/jwt';
@@ -33,8 +33,24 @@ export class AuthService {
     return tokens;
   }
 
-  login() {
-    return '';
+  async login(user: LoginDto) {
+    const userExists = await this.prismaService.user.findUnique({
+      where: {
+        email: user.email,
+      },
+    });
+
+    if (!userExists) throw new BadRequestException('Invalid cerdintioals!');
+    const passwordMatches = await bcrypt.compare(
+      user.password,
+      userExists.password,
+    );
+    if (!passwordMatches)
+      throw new BadRequestException('Invalid cerdintioals!');
+
+    const tokens = await this.genrateTokens(userExists.id, userExists.email);
+    await this.updateRtHash(userExists.id, tokens.refresh_token);
+    return tokens;
   }
 
   logout() {
@@ -58,7 +74,7 @@ export class AuthService {
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(JwtPayload, {
         secret: 'at-secret',
-        expiresIn: '1h',
+        expiresIn: '1m',
       }),
       this.jwtService.signAsync(JwtPayload, {
         secret: 'rt-secret',
