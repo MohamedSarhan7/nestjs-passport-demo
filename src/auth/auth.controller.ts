@@ -9,6 +9,8 @@ import {
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto } from './dto';
 import { AuthGuard } from '@nestjs/passport';
+import { User } from 'src/common/decorators';
+import { JwtPayload } from './types';
 
 @Controller('auth')
 export class AuthController {
@@ -26,8 +28,8 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   @Post('logout')
-  logout() {
-    return {};
+  logout(@User() user: JwtPayload) {
+    return this.authService.logout(user);
   }
 
   @HttpCode(HttpStatus.OK)

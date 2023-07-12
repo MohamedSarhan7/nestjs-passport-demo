@@ -49,12 +49,14 @@ export class AuthService {
       throw new BadRequestException('Invalid cerdintioals!');
 
     const tokens = await this.genrateTokens(userExists.id, userExists.email);
-    await this.updateRtHash(userExists.id, tokens.refresh_token);
+    const rtHash = await this.hashData(tokens.refresh_token);
+    await this.updateRtHash(userExists.id, rtHash);
     return tokens;
   }
 
-  logout() {
-    return '';
+  async logout(user: JwtPayload) {
+    await this.updateRtHash(user.id, null);
+    return { status: true };
   }
 
   refresh() {
@@ -88,12 +90,12 @@ export class AuthService {
     };
   }
 
-  private async updateRtHash(id: number, rt: string) {
-    const hash = await this.hashData(rt);
+  private async updateRtHash(id: number, value: string | null) {
+    // const hash = await this.hashData(rt);
     await this.prismaService.user.update({
       where: { id },
       data: {
-        rtHashed: hash,
+        rtHashed: value,
       },
     });
   }
